@@ -1,0 +1,218 @@
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.neural_network import MLPClassifier
+import matplotlib.pyplot as plt
+import lightgbm as lgb
+import xgboost as xgb
+import seaborn as sns
+import pandas as pd
+import numpy as np
+import warnings
+import joblib
+from pathlib import Path
+
+# TODO: Importing libraries
+
+warnings.filterwarnings('ignore')
+
+# Visualization settings
+sns.set_style('whitegrid')
+plt.rcParams['figure.figsize'] = (12, 6)
+
+# Set style
+plt.style.use('seaborn-v0_8-darkgrid')
+sns.set_palette("husl")
+
+# Display settings
+pd.set_option('display.max_columns', None)
+pd.set_option('display.max_rows', 100)
+
+print("------ All libraries imported! ------\n")
+
+# TODO: Loading the dataset
+
+train = pd.read_csv('./heart disease/train.csv')
+test = pd.read_csv('./heart disease/test.csv')
+
+print("----- DATA OVERVIEW -----")
+print(f"Training samples: {train.shape[0]}")
+print(f"Features: {train.shape[1]}")
+print(f"Test samples: {test.shape[0]} \n")
+
+# TODO: Find target column
+
+# Print Column names
+print("Column names:")
+for i, col in enumerate(train.columns):
+    print(f"{i+1}. {col}")
+
+# Define target column
+target_col = 'Heart Disease'
+
+# # Show target distribution
+print(f"\nTARGET: {target_col} \n")
+print(train[target_col].value_counts())
+print("\n\n")
+
+# TODO: Check dataset quality
+
+# Check for missing values
+print("----- MISSING VALUES -----")
+missing = train.isnull().sum()
+if missing.sum() > 0:
+    print("\nMissing values found:")
+    print(missing[missing > 0])
+else:
+    print("\n No missing values!")
+    
+# Statistics
+print("\n------ STATISTICAL SUMMARY -----")
+
+# Get numeric columns (exclude id and target)
+numeric_cols = train.select_dtypes(include=[np.number]).columns.tolist()
+if 'id' in numeric_cols:
+    numeric_cols.remove('id')
+if target_col in numeric_cols:
+    numeric_cols.remove(target_col)
+print(train[numeric_cols].describe())
+
+# TODO: Fill missing values (if any)
+
+train_clean = train.copy()
+test_clean = test.copy()
+
+for col in numeric_cols:
+    if train_clean[col].isnull().sum() > 0:
+        median_val = train_clean[col].median()
+        train_clean[col].fillna(median_val, inplace=True)
+        test_clean[col].fillna(median_val, inplace=True)
+        print(f"Filled {col} with median: {median_val}")
+
+print("----- Data cleaned! -----\n")
+
+# TODO: Separate features and target
+
+X = train_clean[numeric_cols]
+y = train_clean[target_col]
+
+# Encode target variable if it contains strings
+if not pd.api.types.is_numeric_dtype(y):
+    le = LabelEncoder()
+    y = le.fit_transform(y)
+    print(f"Encoded target classes: {dict(zip(le.classes_, le.transform(le.classes_)))}\n")
+
+# Split into train/validation
+X_train, X_val, y_train, y_val = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+print(f"----- DATA SPLIT -----")
+print(f"Training: {X_train.shape}")
+print(f"Validation: {X_val.shape}")
+
+# TODO: Scale the features
+
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_val_scaled = scaler.transform(X_val)
+
+print("\n----- Features scaled! -----\n")
+
+# TODO: Train models and evaluate
+
+print("----- TRAINING MODELS -----\n")
+
+# Define models
+models = {
+    'Logistic Regression': LogisticRegression(random_state=42, max_iter=1000),
+    'Random Forest': RandomForestClassifier(n_estimators=100, random_state=42),
+    'XGBoost': xgb.XGBClassifier(n_estimators=100, random_state=42, eval_metric='logloss'),
+    'LightGBM': lgb.LGBMClassifier(n_estimators=100, random_state=42, verbose=-1),
+    'Neural Network': MLPClassifier(hidden_layer_sizes=(64, 32), random_state=42, max_iter=100, early_stopping=True)
+}
+
+results = {}
+
+for name, model in models.items():
+    print(f"Training {name}...")
+
+    # Train
+    model.fit(X_train_scaled, y_train)
+
+    # Predict
+    y_pred_val = model.predict(X_val_scaled)
+
+    # Score
+    val_acc = accuracy_score(y_val, y_pred_val)
+
+    results[name] = {
+        'model': model,
+        'accuracy': val_acc
+    }
+
+    print(f"  ✓ Validation Accuracy: {val_acc:.4f}\n")
+
+print("----- All models trained! -----\n")
+
+# TODO: Select best model and predict on test set
+
+# Create comparison table
+print("----- MODEL COMPARISON -----")
+comparison = pd.DataFrame({
+    'Model': list(results.keys()),
+    'Accuracy': [results[m]['accuracy'] for m in results]
+}).sort_values('Accuracy', ascending=False)
+print(comparison)
+
+# Get best model
+best_model_name = comparison.iloc[0]['Model']
+best_model = results[best_model_name]['model']
+print(f"\n🏆 BEST MODEL: {best_model_name}")
+print(f"Accuracy: {comparison.iloc[0]['Accuracy']:.4f}")
+
+# Evaluate best model
+y_pred = best_model.predict(X_val_scaled)
+
+print(f"\n📊 DETAILED EVALUATION: {best_model_name}\n")
+print("Classification Report:")
+print(classification_report(y_val, y_pred))
+
+# TODO: Show feature importance (if available)
+
+print("\n🔍 FEATURE IMPORTANCE:\n")
+if hasattr(best_model, 'feature_importances_'):
+    importance = pd.DataFrame({
+        'Feature': numeric_cols,
+        'Importance': best_model.feature_importances_
+    }).sort_values('Importance', ascending=False)
+print(importance)
+
+# TODO: Prepare test data
+
+X_test = test_clean[numeric_cols]
+X_test_scaled = scaler.transform(X_test)
+
+# Make predictions
+test_predictions = best_model.predict(X_test_scaled)
+
+print(f"\n🎯 TEST PREDICTIONS")
+print(f"Predictions made: {len(test_predictions)}")
+print(f"Distribution:\n{pd.Series(test_predictions).value_counts()}")
+
+# TODO: Save best model
+
+print("\n💾 SAVING MODEL...\n")
+
+# Create models directory
+models_dir = Path(__file__).resolve().parent / 'models'
+models_dir.mkdir(exist_ok=True)
+
+# Save best model as heart_disease.pkl
+model_path = models_dir / 'heart_disease.pkl'
+joblib.dump(best_model, model_path)
+print(f"✓ Saved best model ({best_model_name}) to {model_path}")
+
+print("\n----- Model saved successfully! -----")
