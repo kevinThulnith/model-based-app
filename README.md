@@ -1,1 +1,1 @@
-# sedi-app
+# Model based developed app
