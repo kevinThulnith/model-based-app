@@ -8,15 +8,18 @@ dependencies = [
     "django>=6.0.2",
     "django-cors-headers>=4.9.0",
     "djangorestframework>=3.16.1",
-    "djangorestframework-simplejwt>=5.5.1",
-    "lightgbm>=4.6.0",
-    "matplotlib>=3.10.8",
-    "numpy>=2.4.2",
-    "pandas>=3.0.0",
-    "pyjwt>=2.11.0",
     "python-dotenv>=1.2.1",
+    # ML dependencies for model inference
+    "pandas>=3.0.0",
     "scikit-learn>=1.8.0",
-    "seaborn>=0.13.2",
-    "sqlparse>=0.5.5",
+    "joblib>=1.4.2",
+]
+
+[project.optional-dependencies]
+training = [
+    # Only needed for training models, not for production API
+    "lightgbm>=4.6.0",
     "xgboost>=3.2.0",
+    "matplotlib>=3.10.8",
+    "seaborn>=0.13.2",
 ]
