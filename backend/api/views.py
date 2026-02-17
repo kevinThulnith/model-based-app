@@ -2,6 +2,7 @@ from .serializers import DiabetesPredictionSerializer
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from django.conf import settings
+import pandas as pd
 import joblib
 import os
 
@@ -56,30 +57,32 @@ class DiabetesViewSet(viewsets.ViewSet):
 
                 # Ensure features match training order!
                 # IMPORTANT: Update this list if model training features change
-                features = [
-                    data.get("age"),
-                    data.get("alcohol_consumption_per_week"),
-                    data.get("physical_activity_minutes_per_week"),
-                    data.get("diet_score"),
-                    data.get("sleep_hours_per_day"),
-                    data.get("screen_time_hours_per_day"),
-                    data.get("bmi"),
-                    data.get("waist_to_hip_ratio"),
-                    data.get("systolic_bp"),
-                    data.get("diastolic_bp"),
-                    data.get("heart_rate"),
-                    data.get("cholesterol_total"),
-                    data.get("hdl_cholesterol"),
-                    data.get("ldl_cholesterol"),
-                    data.get("triglycerides"),
-                    data.get("family_history_diabetes"),
-                    data.get("hypertension_history"),
-                    data.get("cardiovascular_history"),
+                feature_names = [
+                    "age",
+                    "alcohol_consumption_per_week",
+                    "physical_activity_minutes_per_week",
+                    "diet_score",
+                    "sleep_hours_per_day",
+                    "screen_time_hours_per_day",
+                    "bmi",
+                    "waist_to_hip_ratio",
+                    "systolic_bp",
+                    "diastolic_bp",
+                    "heart_rate",
+                    "cholesterol_total",
+                    "hdl_cholesterol",
+                    "ldl_cholesterol",
+                    "triglycerides",
+                    "family_history_diabetes",
+                    "hypertension_history",
+                    "cardiovascular_history",
                 ]
 
-                # Convert to 2D array for sklearn
-                # No separate scaler needed if model includes it pipeline, or raw data is fine
-                final_features = [features]
+                # Build DataFrame with feature names to match training format
+                final_features = pd.DataFrame(
+                    [[data.get(name) for name in feature_names]],
+                    columns=feature_names
+                )
 
                 # 2. Predict
                 prediction_class = int(model.predict(final_features)[0])

@@ -3,6 +3,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
 import matplotlib.pyplot as plt
 import lightgbm as lgb
 import xgboost as xgb
@@ -106,43 +107,46 @@ print(f"----- DATA SPLIT -----")
 print(f"Training: {X_train.shape}")
 print(f"Validation: {X_val.shape}")
 
-# TODO: Scale the features
-
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_val_scaled = scaler.transform(X_val)
-
-print("\n----- Features scaled! -----\n")
-
-# TODO: Train models and evaluate
+# TODO: Train models and evaluate (with scaling in pipeline)
 
 print("----- TRAINING MODELS -----\n")
 
-# Define models
+# Define models wrapped in pipelines (scaler + model)
 models = {
-    'Logistic Regression': LogisticRegression(random_state=42, max_iter=1000),
-    'Random Forest': RandomForestClassifier(n_estimators=100, random_state=42),
-    'XGBoost': xgb.XGBClassifier(n_estimators=100, random_state=42, eval_metric='logloss'),
-    'LightGBM': lgb.LGBMClassifier(n_estimators=100, random_state=42, verbose=-1),
-    # 'Neural Network': MLPClassifier(hidden_layers=(64, 32), random_state=42, max_iter=100, early_stopping=True)
+    'Logistic Regression': Pipeline([
+        ('scaler', StandardScaler()),
+        ('classifier', LogisticRegression(random_state=42, max_iter=1000))
+    ]),
+    'Random Forest': Pipeline([
+        ('scaler', StandardScaler()),
+        ('classifier', RandomForestClassifier(n_estimators=100, random_state=42))
+    ]),
+    'XGBoost': Pipeline([
+        ('scaler', StandardScaler()),
+        ('classifier', xgb.XGBClassifier(n_estimators=100, random_state=42, eval_metric='logloss'))
+    ]),
+    'LightGBM': Pipeline([
+        ('scaler', StandardScaler()),
+        ('classifier', lgb.LGBMClassifier(n_estimators=100, random_state=42, verbose=-1))
+    ]),
 }
 
 results = {}
 
-for name, model in models.items():
+for name, pipeline in models.items():
     print(f"Training {name}...")
 
-    # Train
-    model.fit(X_train_scaled, y_train)
+    # Train (pipeline handles scaling internally)
+    pipeline.fit(X_train, y_train)
 
     # Predict
-    y_pred_val = model.predict(X_val_scaled)
+    y_pred_val = pipeline.predict(X_val)
 
     # Score
     val_acc = accuracy_score(y_val, y_pred_val)
 
     results[name] = {
-        'model': model,
+        'model': pipeline,
         'accuracy': val_acc
     }
 
@@ -166,8 +170,8 @@ best_model = results[best_model_name]['model']
 print(f"\n🏆 BEST MODEL: {best_model_name}")
 print(f"Accuracy: {comparison.iloc[0]['Accuracy']:.4f}")
 
-# Evaluate best model
-y_pred = best_model.predict(X_val_scaled)
+# Evaluate best model (pipeline handles scaling)
+y_pred = best_model.predict(X_val)
 
 print(f"\n📊 DETAILED EVALUATION: {best_model_name}\n")
 print("Classification Report:")
@@ -176,20 +180,21 @@ print(classification_report(y_val, y_pred))
 # TODO: Show feature importance (if available)
 
 print("\n🔍 FEATURE IMPORTANCE:\n")
-if hasattr(best_model, 'feature_importances_'):
+# Get classifier from pipeline for feature importance
+classifier = best_model.named_steps['classifier']
+if hasattr(classifier, 'feature_importances_'):
     importance = pd.DataFrame({
         'Feature': numeric_cols,
-        'Importance': best_model.feature_importances_
+        'Importance': classifier.feature_importances_
     }).sort_values('Importance', ascending=False)
-print(importance)
+    print(importance)
 
 # TODO: Prepare test data
 
 X_test = test_clean[numeric_cols]
-X_test_scaled = scaler.transform(X_test)
 
-# Make predictions
-test_predictions = best_model.predict(X_test_scaled)
+# Make predictions (pipeline handles scaling)
+test_predictions = best_model.predict(X_test)
 
 print(f"\n🎯 TEST PREDICTIONS")
 print(f"Predictions made: {len(test_predictions)}")
