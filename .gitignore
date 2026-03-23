@@ -48,3 +48,4 @@ frontend/sedi_diabetes_app/ios/Flutter/ephemeral/
 frontend/sedi_diabetes_app/macos/Flutter/ephemeral/
 frontend/sedi_diabetes_app/windows/flutter/ephemeral/
 frontend/sedi_diabetes_app/linux/flutter/ephemeral/
+frontend/sedi_diabetes_app/lib/firebase_options.dart
