@@ -1,0 +1,50 @@
+# Workspace-level ignores for Python backend + Flutter frontend
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+*.log
+
+# VS Code local settings
+.vscode/
+
+# Python artifacts (all backend subfolders)
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/*.egg-info/
+
+# Backend environment and local data
+backend/.venv/
+backend/.python-version
+backend/.env
+backend/*.csv
+
+# Flutter / Dart artifacts
+frontend/sedi_diabetes_app/.dart_tool/
+frontend/sedi_diabetes_app/.flutter-plugins-dependencies
+frontend/sedi_diabetes_app/build/
+frontend/sedi_diabetes_app/.pub/
+frontend/sedi_diabetes_app/.pub-cache/
+
+# Firebase / Google app config (contains project identifiers and app credentials)
+frontend/sedi_diabetes_app/android/app/google-services.json
+frontend/sedi_diabetes_app/ios/Runner/GoogleService-Info.plist
+frontend/sedi_diabetes_app/macos/Runner/GoogleService-Info.plist
+
+# Android signing / local secret config
+frontend/sedi_diabetes_app/android/key.properties
+frontend/sedi_diabetes_app/android/**/*.jks
+frontend/sedi_diabetes_app/android/**/*.keystore
+
+# Platform generated build outputs
+frontend/sedi_diabetes_app/android/.gradle/
+frontend/sedi_diabetes_app/android/local.properties
+frontend/sedi_diabetes_app/ios/Flutter/ephemeral/
+frontend/sedi_diabetes_app/macos/Flutter/ephemeral/
+frontend/sedi_diabetes_app/windows/flutter/ephemeral/
+frontend/sedi_diabetes_app/linux/flutter/ephemeral/
