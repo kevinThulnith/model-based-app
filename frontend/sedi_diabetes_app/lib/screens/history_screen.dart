@@ -5,6 +5,7 @@ import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import '../models/assessment_result.dart';
 import '../theme/app_theme.dart';
+import 'history_detail_screen.dart';
 
 class HistoryScreen extends StatelessWidget {
   final bool isEmbedded;
@@ -87,10 +88,67 @@ class HistoryScreen extends StatelessWidget {
                     separatorBuilder: (_, __) =>
                         const SizedBox(height: 10),
                     itemBuilder: (context, i) {
-                      return _HistoryTile(result: assessments[i])
-                          .animate(delay: (i * 60).ms)
-                          .fadeIn(duration: 350.ms)
-                          .slideX(begin: 0.1, end: 0);
+                      final result = assessments[i];
+
+                      return Dismissible(
+                        key: ValueKey(result.id),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          decoration: BoxDecoration(
+                            color: AppColors.tertiary,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.white,
+                          ),
+                        ),
+                        confirmDismiss: (_) async {
+                          return await showDialog<bool>(
+                                context: context,
+                                builder: (dialogContext) => AlertDialog(
+                                  title: const Text('Delete assessment?'),
+                                  content: const Text(
+                                    'This assessment will be removed from your history.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(dialogContext).pop(false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.of(dialogContext).pop(true),
+                                      child: const Text('Delete'),
+                                    ),
+                                  ],
+                                ),
+                              ) ??
+                              false;
+                        },
+                        onDismissed: (_) async {
+                          await FirestoreService().deleteAssessment(userId, result.id);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Assessment deleted')),
+                            );
+                          }
+                        },
+                        child: _HistoryTile(
+                          result: result,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => HistoryDetailScreen(result: result),
+                              ),
+                            );
+                          },
+                        )
+                            .animate(delay: (i * 60).ms)
+                            .fadeIn(duration: 350.ms)
+                            .slideX(begin: 0.1, end: 0),
+                      );
                     },
                   );
                 },
@@ -105,93 +163,98 @@ class HistoryScreen extends StatelessWidget {
 
 class _HistoryTile extends StatelessWidget {
   final AssessmentResult result;
+  final VoidCallback onTap;
 
-  const _HistoryTile({required this.result});
+  const _HistoryTile({required this.result, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final isPositive = result.isPositive;
     final color = isPositive ? AppColors.tertiary : AppColors.primary;
 
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Type icon
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
-            child: Icon(
-              _iconForType(result.type),
-              color: color,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  result.typeDisplayName,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${result.label} • ${result.confidence.toStringAsFixed(1)}% confidence',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: AppColors.onSurfaceMuted,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _formatDate(result.createdAt),
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.onSurfaceMuted.withOpacity(0.7),
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: isPositive
-                  ? AppColors.tertiaryContainer
-                  : AppColors.secondaryContainer,
-              borderRadius: BorderRadius.circular(9999),
-            ),
-            child: Text(
-              result.label.toUpperCase(),
-              style: GoogleFonts.inter(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
+          ],
+        ),
+        child: Row(
+          children: [
+            // Type icon
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(
+                _iconForType(result.type),
                 color: color,
-                letterSpacing: 0.5,
+                size: 24,
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    result.typeDisplayName,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${result.label} • ${result.confidence.toStringAsFixed(1)}% confidence',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: AppColors.onSurfaceMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _formatDate(result.createdAt),
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.onSurfaceMuted.withOpacity(0.7),
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: isPositive
+                    ? AppColors.tertiaryContainer
+                    : AppColors.secondaryContainer,
+                borderRadius: BorderRadius.circular(9999),
+              ),
+              child: Text(
+                result.label.toUpperCase(),
+                style: GoogleFonts.inter(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

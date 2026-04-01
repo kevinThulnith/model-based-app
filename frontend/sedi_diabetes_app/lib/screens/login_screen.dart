@@ -320,45 +320,24 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton>
 class _GoogleIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Container(
       width: 22,
       height: 22,
-      child: CustomPaint(painter: _GooglePainter()),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: AppColors.surfaceContainerHigh),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        'G',
+        style: GoogleFonts.inter(
+          fontSize: 13,
+          fontWeight: FontWeight.w800,
+          height: 1,
+          color: AppColors.primary,
+        ),
+      ),
     );
   }
-}
-
-class _GooglePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
-
-    // Draw the G
-    final paint = Paint()..style = PaintingStyle.stroke;
-    paint.strokeWidth = 2;
-
-    // Blue arc (top-right)
-    paint.color = const Color(0xFF4285F4);
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius - 1),
-        -1.0, 2.0, false, paint);
-
-    // Red arc (top-left)
-    paint.color = const Color(0xFFEA4335);
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius - 1),
-        1.0, 1.2, false, paint);
-
-    // Yellow arc (bottom-left)
-    paint.color = const Color(0xFFFBBC05);
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius - 1),
-        2.2, 1.2, false, paint);
-
-    // Green arc (bottom-right)
-    paint.color = const Color(0xFF34A853);
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius - 1),
-        -0.2, -0.8, false, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
