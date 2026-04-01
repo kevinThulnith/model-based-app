@@ -1,6 +1,6 @@
+from .views import DiabetesViewSet, HeartDiseaseViewSet, ChronicKidneyDiseaseViewSet
 from rest_framework.routers import DefaultRouter
 from django.urls import path, include
-from .views import DiabetesViewSet, HeartDiseaseViewSet, ChronicKidneyDiseaseViewSet
 
 router = DefaultRouter()
 

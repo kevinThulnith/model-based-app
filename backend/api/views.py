@@ -1,14 +1,15 @@
-from .serializers import (
-    DiabetesPredictionSerializer,
-    HeartDiseasePredictionSerializer,
-    ChronicKidneyDiseasePredictionSerializer,
-)
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from django.conf import settings
 import pandas as pd
 import joblib
 import os
+
+from .serializers import (
+    ChronicKidneyDiseasePredictionSerializer,
+    HeartDiseasePredictionSerializer,
+    DiabetesPredictionSerializer,
+)
 
 # !Project ViewSets
 
