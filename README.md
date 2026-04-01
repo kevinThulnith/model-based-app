@@ -42,13 +42,14 @@ The application combines a Flutter-based cross-platform mobile frontend with a D
 
 ### Mobile App (Flutter)
 
-- 🔐 Firebase Authentication (Email/Password & Google Sign-In)
+- 🔐 Firebase Authentication with Google Sign-In
 - 📊 Interactive health assessment forms
 - 🎯 Real-time prediction results with confidence scores
 - 📱 Cross-platform support (Android, iOS, Web)
 - 🎨 Modern Material Design UI with animations
-- 💾 Cloud Firestore integration for data persistence
+- 💾 Firebase Realtime Database for data persistence
 - 📈 Historical predictions tracking
+- 🔄 Real-time data synchronization
 
 ### Backend API (Django)
 
@@ -63,21 +64,25 @@ The application combines a Flutter-based cross-platform mobile frontend with a D
 ## 🏗️ Architecture
 
 ```
-┌─────────────────┐
-│  Flutter App    │
-│  (Mobile/Web)   │
-└────────┬────────┘
-         │ HTTP/REST
-         │
-┌────────▼────────┐      ┌──────────────────┐
-│  Django API     │──────│  ML Models       │
-│  (Backend)      │      │  (.pkl files)    │
-└────────┬────────┘      └──────────────────┘
-         │
-┌────────▼────────┐
-│  Firebase       │
-│  (Auth & DB)    │
-└─────────────────┘
+┌─────────────────────────────┐
+│      Flutter App            │
+│      (Mobile/Web)           │
+└──────┬────────────┬─────────┘
+       │            │
+       │ HTTP/REST  │ Firebase SDK
+       │            │
+       │            ▼
+       │      ┌──────────────────┐
+       │      │  Firebase        │
+       │      │  - Google Auth   │
+       │      │  - Realtime DB   │
+       │      └──────────────────┘
+       │
+       ▼
+┌──────────────┐      ┌──────────────────┐
+│  Django API  │──────│  ML Models       │
+│  (Backend)   │      │  (.pkl files)    │
+└──────────────┘      └──────────────────┘
 ```
 
 ## 🛠️ Technologies
@@ -93,8 +98,9 @@ The application combines a Flutter-based cross-platform mobile frontend with a D
 
 - **Framework**: Flutter 3.0+
 - **Language**: Dart
-- **Backend Integration**: Firebase (Auth, Firestore)
-- **HTTP Client**: http package
+- **Authentication**: Firebase Auth with Google Sign-In
+- **Database**: Firebase Realtime Database
+- **HTTP Client**: http package for REST API calls
 - **UI Libraries**: Google Fonts, Flutter Animate, Shimmer
 
 ## 📁 Project Structure
@@ -213,11 +219,14 @@ sedi-app/
 
 3. **Configure Firebase**
    - Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
+   - Enable **Firebase Authentication** and add Google Sign-In provider
+   - Enable **Firebase Realtime Database** and set up security rules
    - Add Android/iOS/Web apps to your project
    - Download and place configuration files:
      - `google-services.json` (Android) → `android/app/`
      - `GoogleService-Info.plist` (iOS) → `ios/Runner/`
    - Update `firebase.json` with your project settings
+   - Configure `firestore.rules` for database security
 
 4. **Update API endpoint**
    - Open `lib/services/api_service.dart`
@@ -328,7 +337,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🙏 Acknowledgments
 
 - Machine learning models trained on public health datasets
-- Firebase for authentication and database services
+- Firebase for authentication and realtime database services
+- Google Sign-In for seamless authentication
 - Flutter community for excellent packages and support
 - Django REST Framework for robust API development
 
